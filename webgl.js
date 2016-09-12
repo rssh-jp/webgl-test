@@ -9,11 +9,30 @@ var startWebGl = function(){
     initGL(canvas);
     initShaders();
     initBuffers();
+    initObject();
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
     tick();
+};
+
+var prim1 = new Primitive();
+var initObject = function(){
+    var vertices = [
+         1.0,  1.0, 0.0,
+        -1.0,  1.0, 0.0,
+         1.0, -1.0, 0,0
+        -1.0, -1.0, 0,0
+    ];
+    var colors = [
+        1.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0, 1.0,
+        0.0, 0.0, 1.0, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+    ];
+    prim1.setVertex4(vertices, colors);
+    prim1.setRotate(0, new Vector(0, 1, 0));
 };
 var initGL = function(canvas){
     try{
@@ -217,9 +236,7 @@ var drawScene = function(){
 
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 1000.0, pMatrix);
 
-    console.log('mvMatrix : ', mvMatrix);
     mat4.identity(mvMatrix);
-    console.log('mvMatrix : ', mvMatrix);
     mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
     mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
     mat4.translate(mvMatrix, pos.toArrayInverse());
@@ -234,6 +251,7 @@ var drawScene = function(){
     // カメラの描画
     drawPrimitive(mvMatrix, cameraVertexPositionBuffer, cameraVertexColorBuffer, cameraPos, cameraDegrees, new Vector(0, 1, 0));
 
+    prim1.draw(mvMatrix);
 };
 
 var aimCamera = function(pos, aimPos, distance, degrees){
