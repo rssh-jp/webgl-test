@@ -186,61 +186,59 @@ var pitch = -45;
 var yaw = 0;
 var pos = new Vector(0,50,50);
 var cameraPos = new Vector(0, 0, 0);
+var drawPrimitive = function(matrix, positionBuffer, colorBuffer, pos, rotDegrees, rotAxis){
+    // 移動の後に回転
+    if(pos != null){
+        mat4.translate(matrix, pos.toArray());
+    }
+    if(rotDegrees != null && rotAxis != null){
+        mat4.rotate(matrix, degToRad(rotDegrees), rotAxis.toArray());
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, positionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    setMatrixUniforms();
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, positionBuffer.numItems);
+
+    // 移動や回転を戻す
+    if(rotDegrees != null && rotAxis != null){
+        mat4.rotate(matrix, degToRad(-rotDegrees), rotAxis.toArray());
+    }
+    if(pos != null){
+        mat4.translate(matrix, pos.toArrayInverse());
+    }
+};
 var drawScene = function(){
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 1000.0, pMatrix);
 
+    console.log('mvMatrix : ', mvMatrix);
     mat4.identity(mvMatrix);
+    console.log('mvMatrix : ', mvMatrix);
     mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
     mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
     mat4.translate(mvMatrix, pos.toArrayInverse());
 
 
     // 三角形の描画
-    mat4.rotate(mvMatrix, degToRad(35), [0, 1, 0]);
-    mat4.translate(mvMatrix, [-1.5, 0.0, 0.0]);
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, triangleVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
+    drawPrimitive(mvMatrix, triangleVertexPositionBuffer, triangleVertexColorBuffer, new Vector(-1.5, 0, 0), 35, new Vector(0, 1, 0));
 
     // 四角形の描画
-    mat4.rotate(mvMatrix, degToRad(-35), [0, 1, 0]);
-    mat4.translate(mvMatrix, [3.0, 0.0, 0.0]);
-    gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexColorBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, squareVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, squareVertexPositionBuffer.numItems);
+    drawPrimitive(mvMatrix, squareVertexPositionBuffer, squareVertexColorBuffer, new Vector(1.5, 0, 0), null, null);
 
     // カメラの描画
-//    mat4.translate(mvMatrix, cameraPos.toArray());
-    mat4.rotate(mvMatrix, degToRad(cameraDegrees), [0, 1, 0]);
-    mat4.translate(mvMatrix, [-1.5, 0, 0]);
-    mat4.translate(mvMatrix, cameraPos.toArray());
-    gl.bindBuffer(gl.ARRAY_BUFFER, cameraVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cameraVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, cameraVertexColorBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, cameraVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, cameraVertexPositionBuffer.numItems);
+    drawPrimitive(mvMatrix, cameraVertexPositionBuffer, cameraVertexColorBuffer, cameraPos, cameraDegrees, new Vector(0, 1, 0));
 
 };
 
 var aimCamera = function(pos, aimPos, distance, degrees){
-    pos.z = aimPos.z + Math.cos(degToRad(degrees)) * distance;
-    pos.x = aimPos.x + Math.sin(degToRad(degrees)) * distance;
+    pos.z = aimPos.z + (Math.cos(degToRad(degrees)) * distance);
+    pos.x = aimPos.x + (Math.sin(degToRad(degrees)) * distance);
 };
 var lastTime = 0;
 var cameraDegrees = 0;
@@ -248,14 +246,13 @@ var animate = function(){
     var timeNow = new Date().getTime();
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
-        cameraDegrees += 1;
+        cameraDegrees += 0.5;
         if(cameraDegrees >= 360){
             cameraDegrees -= 360;
         }
         aimCamera(cameraPos, new Vector(0, 0, 0), 10, cameraDegrees);
     }
     lastTime = timeNow;
-    console.log('cameraPos : ', cameraPos);
 }
 
 var tick = function() {
