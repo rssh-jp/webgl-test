@@ -18,6 +18,13 @@ VertexBuffer.prototype.setPositionArray4 = function(list){
     this.position.itemSize = 3;
     this.position.numItems = 4;
 };
+VertexBuffer.prototype.setPositionArray = function(list, item_num){
+    this.position = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.position);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(list), gl.STATIC_DRAW);
+    this.position.itemSize = 3;
+    this.position.numItems = item_num;
+};
 VertexBuffer.prototype.setColorArray3 = function(list){
     this.color = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.color);
@@ -31,6 +38,13 @@ VertexBuffer.prototype.setColorArray4 = function(list){
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(list), gl.STATIC_DRAW);
     this.color.itemSize = 4;
     this.color.numItems = 4;
+};
+VertexBuffer.prototype.setColorArray = function(list, item_num){
+    this.color = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.color);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(list), gl.STATIC_DRAW);
+    this.color.itemSize = 4;
+    this.color.numItems = item_num;
 };
 VertexBuffer.prototype.getPosition = function(){
     return this.position;
@@ -85,8 +99,15 @@ Primitive.prototype.setVertex4 = function(position_list, color_list){
     this.vertexBuffer.setPositionArray4(position_list);
     this.vertexBuffer.setColorArray4(color_list);
 };
+Primitive.prototype.setVertex = function(position_list, position_item_num, color_list, color_item_num){
+    this.vertexBuffer.setPositionArray(position_list, position_item_num);
+    this.vertexBuffer.setColorArray(color_list, color_item_num);
+};
 Primitive.prototype.setRotate = function(degrees, axis){
     this.rotate.set(degrees, axis);
+};
+Primitive.prototype.setPos = function(v){
+    this.pos = v;
 };
 Primitive.prototype.addPos = function(v){
     this.pos.add(v);

@@ -13,17 +13,33 @@ var startWebGl = function(){
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+
+    document.onmousedown = function(e){
+        evMouseDown(e);
+    };
 
     tick();
 };
-
+var toggleCamera = true;
+var evMouseDown = function(e){
+    console.log('e : ', e);
+    toggleCamera = toggleCamera ? false : true;
+    if(toggleCamera){
+        pitch = -45;
+    }
+    else{
+        pitch = 0;
+    }
+};
 var prim1 = new Primitive();
+var prim2 = new Primitive();
 var initObject = function(){
     var vertices = [
          1.0,  1.0, 0.0,
         -1.0,  1.0, 0.0,
-         1.0, -1.0, 0,0
-        -1.0, -1.0, 0,0
+         1.0, -1.0, 0.0,
+        -1.0, -1.0, 0.0,
     ];
     var colors = [
         1.0, 0.0, 0.0, 1.0,
@@ -33,6 +49,57 @@ var initObject = function(){
     ];
     prim1.setVertex4(vertices, colors);
     prim1.setRotate(0, new Vector(0, 1, 0));
+    prim1.setPos(new Vector(1.5, 0, 0));
+
+    vertices = [
+        -1.0, -1.0,  1.0,   // 左下前
+         1.0, -1.0,  1.0,   // 右下前
+        -1.0,  1.0,  1.0,   // 左上前
+         1.0,  1.0,  1.0,   // 右上前
+
+         1.0,  1.0,  1.0,   // 右上前
+         1.0, -1.0,  1.0,   // 右下前
+         1.0,  1.0, -1.0,   // 右上奥
+         1.0, -1.0, -1.0,   // 右下奥
+
+         1.0, -1.0, -1.0,   // 右下奥
+        -1.0, -1.0, -1.0,   // 左下奥
+         1.0,  1.0, -1.0,   // 右上奥
+        -1.0,  1.0, -1.0,   // 左上奥
+
+        -1.0,  1.0, -1.0,   // 左上奥
+        -1.0, -1.0, -1.0,   // 左下奥
+        -1.0,  1.0,  1.0,   // 左上前
+        -1.0, -1.0,  1.0,   // 左下前
+
+        -1.0,  1.0, -1.0,   // 左上奥
+        -1.0, -1.0, -1.0,   // 左下奥
+        -1.0,  1.0,  1.0,   // 左上前
+        -1.0, -1.0,  1.0,   // 左下前
+    ];
+    colors = [
+        1.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0, 1.0,
+        0.0, 0.0, 1.0, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+        0.5, 0.5, 0.5, 1.0,
+    ];
+    prim2.setVertex(vertices, 16, colors, 16);
+    prim2.setRotate(0, new Vector(0, 1, 0));
+    prim2.setPos(new Vector(-1.5, 0, 0));
 };
 var initGL = function(canvas){
     try{
@@ -94,7 +161,7 @@ var initShaders = function(){
     gl.linkProgram(shaderProgram);
 
     if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)){
-        alert('シャーダーの初期化に失敗');
+        alert('シェーダーの初期化に失敗');
     }
 
     gl.useProgram(shaderProgram);
@@ -117,62 +184,10 @@ var setMatrixUniforms = function(){
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
 };
 
-var triangleVertexPositionBuffer;
-var triangleVertexColorBuffer;
-var squareVertexPositionBuffer;
-var squareVertexColorBuffer;
 var cameraVertexPositionBuffer;
 var cameraVertexColorBuffer;
 
 var initBuffers = function(){
-    // 三角形の情報
-    // 三角形の頂点
-    triangleVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-    var vertices = [
-         0.0,  1.0, 0.0,
-        -1.0, -1.0, 0.0,
-         1.0, -1.0, 0,0
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    triangleVertexPositionBuffer.itemSize = 3;
-    triangleVertexPositionBuffer.numItems = 3;
-    // 三角形の頂点の色
-    triangleVertexColorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
-    var colors = [
-        1.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    triangleVertexColorBuffer.itemSize = 3;
-    triangleVertexColorBuffer.numItems = 4;
-
-    // 四角形の情報
-    // 四角形の頂点
-    squareVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
-    vertices = [
-         1.0,  1.0, 0.0,
-        -1.0,  1.0, 0.0,
-         1.0, -1.0, 0,0
-        -1.0, -1.0, 0,0
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    squareVertexPositionBuffer.itemSize = 3;
-    squareVertexPositionBuffer.numItems = 4;
-    // 四角形の頂点の色
-    squareVertexColorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexColorBuffer);
-    colors = [];
-    for(var i=0; i<4; i++){
-        colors = colors.concat([0.5, 0.5, 1.0, 1.0]);
-    }
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    squareVertexColorBuffer.itemSize = 4;
-    squareVertexColorBuffer.numItems = 4;
-
     // カメラの情報
     // カメラの頂点
     cameraVertexPositionBuffer = gl.createBuffer();
@@ -180,31 +195,32 @@ var initBuffers = function(){
     vertices = [
          1.0,  1.0, 0.0,
         -1.0,  1.0, 0.0,
-         1.0, -1.0, 0,0
-        -1.0, -1.0, 0,0
+         1.0, -1.0, 0.0,
+        -1.0, -1.0, 0.0,
+
+        -1.0,  1.0, 0.0,
+         1.0,  1.0, 0.0,
+        -1.0, -1.0, 0.0,
+         1.0, -1.0, 0.0,
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     cameraVertexPositionBuffer.itemSize = 3;
-    cameraVertexPositionBuffer.numItems = 4;
+    cameraVertexPositionBuffer.numItems = 8;
     // カメラの頂点の色
     cameraVertexColorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, cameraVertexColorBuffer);
     colors = [];
-    for(var i=0; i<4; i++){
+    for(var i=0; i<8; i++){
         colors = colors.concat([1.0, 0.5, 1.0, 1.0]);
     }
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
     cameraVertexColorBuffer.itemSize = 4;
-    cameraVertexColorBuffer.numItems = 4;
+    cameraVertexColorBuffer.numItems = 8;
 };
 
 function degToRad(degrees) {
     return degrees * Math.PI / 180;
 }
-var pitch = -45;
-var yaw = 0;
-var pos = new Vector(0,50,50);
-var cameraPos = new Vector(0, 0, 0);
 var drawPrimitive = function(matrix, positionBuffer, colorBuffer, pos, rotDegrees, rotAxis){
     // 移動の後に回転
     if(pos != null){
@@ -230,6 +246,10 @@ var drawPrimitive = function(matrix, positionBuffer, colorBuffer, pos, rotDegree
         mat4.translate(matrix, pos.toArrayInverse());
     }
 };
+var pitch = -45;
+var yaw = 0;
+var pos = new Vector(0,20,20);
+var cameraPos = new Vector(0, 0, 0);
 var drawScene = function(){
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -238,20 +258,20 @@ var drawScene = function(){
 
     mat4.identity(mvMatrix);
     mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
-    mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
-    mat4.translate(mvMatrix, pos.toArrayInverse());
-
-
-    // 三角形の描画
-    drawPrimitive(mvMatrix, triangleVertexPositionBuffer, triangleVertexColorBuffer, new Vector(-1.5, 0, 0), 35, new Vector(0, 1, 0));
-
-    // 四角形の描画
-    drawPrimitive(mvMatrix, squareVertexPositionBuffer, squareVertexColorBuffer, new Vector(1.5, 0, 0), null, null);
+    if(toggleCamera){
+        mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
+        mat4.translate(mvMatrix, pos.toArrayInverse());
+    }
+    else{
+        mat4.rotate(mvMatrix, degToRad(-cameraDegrees), [0, 1, 0]);
+        mat4.translate(mvMatrix, cameraPos.toArrayInverse());
+    }
 
     // カメラの描画
-    drawPrimitive(mvMatrix, cameraVertexPositionBuffer, cameraVertexColorBuffer, cameraPos, cameraDegrees, new Vector(0, 1, 0));
+    drawPrimitive(mvMatrix, cameraVertexPositionBuffer, cameraVertexColorBuffer, cameraPos, cameraDegrees, new Vector(0, 1, 0, 22.5));
 
     prim1.draw(mvMatrix);
+    prim2.draw(mvMatrix);
 };
 
 var aimCamera = function(pos, aimPos, distance, degrees){
@@ -264,9 +284,12 @@ var animate = function(){
     var timeNow = new Date().getTime();
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
-        cameraDegrees += 0.5;
+        cameraDegrees += 1.5;
         if(cameraDegrees >= 360){
             cameraDegrees -= 360;
+        }
+        if(cameraDegrees < 0){
+            cameraDegrees += 360;
         }
         aimCamera(cameraPos, new Vector(0, 0, 0), 10, cameraDegrees);
     }
