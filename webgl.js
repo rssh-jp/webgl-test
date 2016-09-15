@@ -8,7 +8,6 @@ var startWebGl = function(){
     };
     initGL(canvas);
     initShaders();
-    initBuffers();
     initObject();
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -25,13 +24,9 @@ var toggleCamera = true;
 var evMouseDown = function(e){
     console.log('e : ', e);
     toggleCamera = toggleCamera ? false : true;
-    if(toggleCamera){
-        pitch = -45;
-    }
-    else{
-        pitch = 0;
-    }
 };
+var cameraMain = new Camera();
+var cameraAim = new Camera();
 var prim1 = new Primitive();
 var prim2 = new Primitive();
 var initObject = function(){
@@ -73,33 +68,57 @@ var initObject = function(){
         -1.0, -1.0,  1.0,   // 左下前
 
         -1.0,  1.0, -1.0,   // 左上奥
-        -1.0, -1.0, -1.0,   // 左下奥
         -1.0,  1.0,  1.0,   // 左上前
+         1.0,  1.0, -1.0,   // 右上奥
+         1.0,  1.0,  1.0,   // 右上前
+
         -1.0, -1.0,  1.0,   // 左下前
+        -1.0, -1.0, -1.0,   // 左下奥
+         1.0, -1.0,  1.0,   // 右下前
+         1.0, -1.0, -1.0,   // 右下奥
     ];
     colors = [
         1.0, 0.0, 0.0, 1.0,
         0.0, 1.0, 0.0, 1.0,
         0.0, 0.0, 1.0, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
-        0.5, 0.5, 0.5, 1.0,
+        1.0, 1.0, 1.0, 1.0,
+
+        1.0, 1.0, 1.0, 1.0,
+        0.0, 1.0, 0.0, 1.0,
+        0.0, 0.0, 1.0, 1.0,
+        0.0, 1.0, 0.0, 1.0,
+
+        0.0, 1.0, 0.0, 1.0,
+        1.0, 0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0, 1.0,
+        1.0, 1.0, 1.0, 1.0,
+
+        1.0, 1.0, 1.0, 1.0,
+        1.0, 0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0, 1.0,
+        1.0, 0.0, 0.0, 1.0,
+
+        1.0, 1.0, 1.0, 1.0,
+        0.0, 0.0, 1.0, 1.0,
+        0.0, 0.0, 1.0, 1.0,
+        1.0, 1.0, 1.0, 1.0,
+
+        1.0, 0.0, 0.0, 1.0,
+        1.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0, 1.0,
+        0.0, 1.0, 0.0, 1.0,
     ];
-    prim2.setVertex(vertices, 16, colors, 16);
+    prim2.setVertex(vertices, 24, colors, 24);
     prim2.setRotate(0, new Vector(0, 1, 0));
     prim2.setPos(new Vector(-1.5, 0, 0));
+
+    // カメラ初期化
+    cameraMain.initialize();
+    cameraMain.setPos(new Vector(0, 20, 20));
+    cameraMain.setRotate(-45, new Vector(1, 0, 0));
+    cameraAim.initialize();
+    cameraAim.setPos(new Vector(0, 0, 0));
+    cameraAim.setRotate(0, new Vector(0, 1, 0));
 };
 var initGL = function(canvas){
     try{
@@ -184,72 +203,6 @@ var setMatrixUniforms = function(){
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
 };
 
-var cameraVertexPositionBuffer;
-var cameraVertexColorBuffer;
-
-var initBuffers = function(){
-    // カメラの情報
-    // カメラの頂点
-    cameraVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cameraVertexPositionBuffer);
-    vertices = [
-         1.0,  1.0, 0.0,
-        -1.0,  1.0, 0.0,
-         1.0, -1.0, 0.0,
-        -1.0, -1.0, 0.0,
-
-        -1.0,  1.0, 0.0,
-         1.0,  1.0, 0.0,
-        -1.0, -1.0, 0.0,
-         1.0, -1.0, 0.0,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    cameraVertexPositionBuffer.itemSize = 3;
-    cameraVertexPositionBuffer.numItems = 8;
-    // カメラの頂点の色
-    cameraVertexColorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cameraVertexColorBuffer);
-    colors = [];
-    for(var i=0; i<8; i++){
-        colors = colors.concat([1.0, 0.5, 1.0, 1.0]);
-    }
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    cameraVertexColorBuffer.itemSize = 4;
-    cameraVertexColorBuffer.numItems = 8;
-};
-
-function degToRad(degrees) {
-    return degrees * Math.PI / 180;
-}
-var drawPrimitive = function(matrix, positionBuffer, colorBuffer, pos, rotDegrees, rotAxis){
-    // 移動の後に回転
-    if(pos != null){
-        mat4.translate(matrix, pos.toArray());
-    }
-    if(rotDegrees != null && rotAxis != null){
-        mat4.rotate(matrix, degToRad(rotDegrees), rotAxis.toArray());
-    }
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, positionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, positionBuffer.numItems);
-
-    // 移動や回転を戻す
-    if(rotDegrees != null && rotAxis != null){
-        mat4.rotate(matrix, degToRad(-rotDegrees), rotAxis.toArray());
-    }
-    if(pos != null){
-        mat4.translate(matrix, pos.toArrayInverse());
-    }
-};
-var pitch = -45;
-var yaw = 0;
-var pos = new Vector(0,20,20);
-var cameraPos = new Vector(0, 0, 0);
 var drawScene = function(){
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -257,41 +210,29 @@ var drawScene = function(){
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 1000.0, pMatrix);
 
     mat4.identity(mvMatrix);
-    mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
     if(toggleCamera){
-        mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
-        mat4.translate(mvMatrix, pos.toArrayInverse());
+        cameraMain.setting(mvMatrix);
     }
     else{
-        mat4.rotate(mvMatrix, degToRad(-cameraDegrees), [0, 1, 0]);
-        mat4.translate(mvMatrix, cameraPos.toArrayInverse());
+        cameraAim.setting(mvMatrix);
     }
 
     // カメラの描画
-    drawPrimitive(mvMatrix, cameraVertexPositionBuffer, cameraVertexColorBuffer, cameraPos, cameraDegrees, new Vector(0, 1, 0, 22.5));
+    cameraAim.draw(mvMatrix);
 
+    // プリミティブの描画
     prim1.draw(mvMatrix);
     prim2.draw(mvMatrix);
 };
 
-var aimCamera = function(pos, aimPos, distance, degrees){
-    pos.z = aimPos.z + (Math.cos(degToRad(degrees)) * distance);
-    pos.x = aimPos.x + (Math.sin(degToRad(degrees)) * distance);
-};
 var lastTime = 0;
-var cameraDegrees = 0;
 var animate = function(){
     var timeNow = new Date().getTime();
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
-        cameraDegrees += 1.5;
-        if(cameraDegrees >= 360){
-            cameraDegrees -= 360;
-        }
-        if(cameraDegrees < 0){
-            cameraDegrees += 360;
-        }
-        aimCamera(cameraPos, new Vector(0, 0, 0), 10, cameraDegrees);
+
+        // エイムするカメラの移動
+        cameraAim.aimRotate5sec(elapsed, new Vector(0, 0, 0), 10);
     }
     lastTime = timeNow;
 }
