@@ -1,114 +1,121 @@
-var gl = null;
-var startWebGl = function(){
-    var canvas = document.getElementById('canvassample');
-    var parms = {
-        alpha : true,
-        stencil : false,
-        antialias : true,
-    };
-    initGL(canvas);
-    initShaders();
-    initObject();
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
-
-    document.onmousedown = function(e){
-        evMouseDown(e);
-    };
-
-    tick();
-};
 var toggleCamera = true;
 var evMouseDown = function(e){
     console.log('e : ', e);
     toggleCamera = toggleCamera ? false : true;
 };
-var cameraMain = new Camera();
-var cameraAim = new Camera();
-var prim1 = new Primitive();
-var prim2 = new Primitive();
+var cameraMain = null;
+var cameraAim = null;
+var prim1 = null;
+var prim2 = null;
 var initObject = function(){
+    cameraMain = new Camera();
+    cameraAim = new Camera();
+    prim1 = new Primitive('rsrc/white.png');
+    prim2 = new Primitive('rsrc/white.png');
     var vertices = [
-         1.0,  1.0, 0.0,
-        -1.0,  1.0, 0.0,
-         1.0, -1.0, 0.0,
-        -1.0, -1.0, 0.0,
+        // Front face
+        -1.0, -1.0,  0.0,
+         1.0, -1.0,  0.0,
+         1.0,  1.0,  0.0,
+        -1.0,  1.0,  0.0,
     ];
-    var colors = [
-        1.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        0.5, 0.5, 0.5, 1.0,
+    var textures = [
+        // Front face
+        0.0, 0.0,
+        1.0, 0.0,
+        1.0, 1.0,
+        0.0, 1.0,
     ];
-    prim1.setVertex4(vertices, colors);
+    var indexes = [
+        0, 1, 2,      0, 2, 3,    // Front face
+    ];
+    prim1.setVertex4(vertices, textures, indexes);
     prim1.setRotate(0, new Vector(0, 1, 0));
     prim1.setPos(new Vector(1.5, 0, 0));
 
     vertices = [
-        -1.0, -1.0,  1.0,   // 左下前
-         1.0, -1.0,  1.0,   // 右下前
-        -1.0,  1.0,  1.0,   // 左上前
-         1.0,  1.0,  1.0,   // 右上前
+        // Front face
+        -1.0, -1.0,  1.0,
+         1.0, -1.0,  1.0,
+         1.0,  1.0,  1.0,
+        -1.0,  1.0,  1.0,
 
-         1.0,  1.0,  1.0,   // 右上前
-         1.0, -1.0,  1.0,   // 右下前
-         1.0,  1.0, -1.0,   // 右上奥
-         1.0, -1.0, -1.0,   // 右下奥
+        // Back face
+        -1.0, -1.0, -1.0,
+        -1.0,  1.0, -1.0,
+         1.0,  1.0, -1.0,
+         1.0, -1.0, -1.0,
 
-         1.0, -1.0, -1.0,   // 右下奥
-        -1.0, -1.0, -1.0,   // 左下奥
-         1.0,  1.0, -1.0,   // 右上奥
-        -1.0,  1.0, -1.0,   // 左上奥
+        // Top face
+        -1.0,  1.0, -1.0,
+        -1.0,  1.0,  1.0,
+         1.0,  1.0,  1.0,
+         1.0,  1.0, -1.0,
 
-        -1.0,  1.0, -1.0,   // 左上奥
-        -1.0, -1.0, -1.0,   // 左下奥
-        -1.0,  1.0,  1.0,   // 左上前
-        -1.0, -1.0,  1.0,   // 左下前
+        // Bottom face
+        -1.0, -1.0, -1.0,
+         1.0, -1.0, -1.0,
+         1.0, -1.0,  1.0,
+        -1.0, -1.0,  1.0,
 
-        -1.0,  1.0, -1.0,   // 左上奥
-        -1.0,  1.0,  1.0,   // 左上前
-         1.0,  1.0, -1.0,   // 右上奥
-         1.0,  1.0,  1.0,   // 右上前
+        // Right face
+         1.0, -1.0, -1.0,
+         1.0,  1.0, -1.0,
+         1.0,  1.0,  1.0,
+         1.0, -1.0,  1.0,
 
-        -1.0, -1.0,  1.0,   // 左下前
-        -1.0, -1.0, -1.0,   // 左下奥
-         1.0, -1.0,  1.0,   // 右下前
-         1.0, -1.0, -1.0,   // 右下奥
+        // Left face
+        -1.0, -1.0, -1.0,
+        -1.0, -1.0,  1.0,
+        -1.0,  1.0,  1.0,
+        -1.0,  1.0, -1.0,
     ];
-    colors = [
-        1.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        1.0, 1.0, 1.0, 1.0,
+    textures = [
+        // Front face
+        0.0, 0.0,
+        1.0, 0.0,
+        1.0, 1.0,
+        0.0, 1.0,
 
-        1.0, 1.0, 1.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
+        // Back face
+        1.0, 0.0,
+        1.0, 1.0,
+        0.0, 1.0,
+        0.0, 0.0,
 
-        0.0, 1.0, 0.0, 1.0,
-        1.0, 0.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        1.0, 1.0, 1.0, 1.0,
+        // Top face
+        0.0, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
+        1.0, 1.0,
 
-        1.0, 1.0, 1.0, 1.0,
-        1.0, 0.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        1.0, 0.0, 0.0, 1.0,
+        // Bottom face
+        1.0, 1.0,
+        0.0, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
 
-        1.0, 1.0, 1.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        1.0, 1.0, 1.0, 1.0,
+        // Right face
+        1.0, 0.0,
+        1.0, 1.0,
+        0.0, 1.0,
+        0.0, 0.0,
 
-        1.0, 0.0, 0.0, 1.0,
-        1.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
+        // Left face
+        0.0, 0.0,
+        1.0, 0.0,
+        1.0, 1.0,
+        0.0, 1.0,
     ];
-    prim2.setVertex(vertices, 24, colors, 24);
+    indexes = [
+        0, 1, 2,      0, 2, 3,    // Front face
+        4, 5, 6,      4, 6, 7,    // Back face
+        8, 9, 10,     8, 10, 11,  // Top face
+        12, 13, 14,   12, 14, 15, // Bottom face
+        16, 17, 18,   16, 18, 19, // Right face
+        20, 21, 22,   20, 22, 23  // Left face
+    ];
+    prim2.setVertex(vertices, 24, textures, 24, indexes, 36);
     prim2.setRotate(0, new Vector(0, 1, 0));
     prim2.setPos(new Vector(-1.5, 0, 0));
 
@@ -188,11 +195,12 @@ var initShaders = function(){
     shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
     gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-    shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, 'aVertexColor');
-    gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+    shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
+    gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
 
     shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, 'uPMatrix');
     shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, 'uMVMatrix');
+    shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 };
 
 var mvMatrix = mat4.create();
@@ -243,3 +251,43 @@ var tick = function() {
     animate();
 }
 
+var gl = null;
+var startWebGl = function(){
+    var async = new Async();
+    var task = [];
+    // webglの初期化
+    task.push(function(next){
+        var canvas = document.getElementById('canvassample');
+        var parms = {
+            alpha : true,
+            stencil : false,
+            antialias : true,
+        };
+        initGL(canvas);
+        next(null);
+    });
+    // 初期ロード
+    task.push(function(next){
+        initShaders();
+        initObject();
+        next(null);
+    });
+    // 初期化の後片付け
+    task.push(function(next){
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.CULL_FACE);
+
+        document.onmousedown = function(e){
+            evMouseDown(e);
+        };
+        next(null);
+    });
+    async.waterfall(task, function(error){
+        if(error){
+            console.log('error : ', error);
+            return;
+        }
+        tick();
+    });
+};
